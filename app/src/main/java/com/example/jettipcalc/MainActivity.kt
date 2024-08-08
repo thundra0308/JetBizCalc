@@ -5,11 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.example.jettipcalc.components.InputField
 import com.example.jettipcalc.ui.theme.JetTipCalcTheme
 import com.example.jettipcalc.widgets.RoundIconButton
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +53,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyApp {
+                val systemUiController = rememberSystemUiController()
+                val isDarkTheme = isSystemInDarkTheme()
+                systemUiController.setStatusBarColor(
+                    color = MaterialTheme.colorScheme.background,
+                    darkIcons = !isDarkTheme
+                )
                 MainContent()
             }
         }
@@ -61,12 +70,12 @@ fun MyApp(content: @Composable () -> Unit) {
     JetTipCalcTheme {
         Surface(
             color = MaterialTheme.colorScheme.background,
-            modifier = Modifier.padding(
-                top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
-                bottom = 10.dp,
-                start = 10.dp,
-                end = 10.dp
-            )
+            modifier = Modifier
+                .padding(
+                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                )
+                .fillMaxWidth()
+                .fillMaxHeight()
         ) {
             content()
         }
@@ -86,7 +95,7 @@ fun ResultCardUi(totalPerPerson: Double = 0.0) {
     val total: String = "%.2f".format(totalPerPerson)
     Surface(
         modifier = Modifier
-            .padding(start = 10.dp, end = 10.dp, bottom = 10.dp)
+            .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 10.dp)
             .fillMaxWidth()
             .height(150.dp)
             .clip(shape = RoundedCornerShape(corner = CornerSize(12.dp))),
@@ -101,7 +110,8 @@ fun ResultCardUi(totalPerPerson: Double = 0.0) {
                 text = "Total Per Person",
                 style = TextStyle(
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
                 )
             )
             Row {
@@ -109,14 +119,16 @@ fun ResultCardUi(totalPerPerson: Double = 0.0) {
                     text = "$",
                     style = TextStyle(
                         fontSize = 28.sp,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.Black
                     )
                 )
                 Text(
                     text = total,
                     style = TextStyle(
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.ExtraBold
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.Black
                     )
                 )
             }
@@ -148,7 +160,7 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
     ResultCardUi(totalPerPersonState.doubleValue)
     Surface(
         modifier = Modifier
-            .padding(10.dp)
+            .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 10.dp)
             .fillMaxWidth(),
         shape = RoundedCornerShape(corner = CornerSize(8.dp)),
         border = BorderStroke(width = 1.dp, color = Color.LightGray)
@@ -169,7 +181,7 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
                     keyboardController?.hide()
                 },
                 onValueChange = {
-                    if(it.isNotEmpty()) {
+                    if (it.isNotEmpty()) {
                         totalBillState.value = it
                         tipAmountState.doubleValue = calculateTotalTip(
                             totalBillState.value.toDouble(),
