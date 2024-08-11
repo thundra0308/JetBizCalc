@@ -27,6 +27,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -72,7 +73,9 @@ fun MyApp(content: @Composable () -> Unit) {
             color = MaterialTheme.colorScheme.background,
             modifier = Modifier
                 .padding(
-                    top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                    top = WindowInsets.statusBars
+                        .asPaddingValues()
+                        .calculateTopPadding(),
                 )
                 .fillMaxWidth()
                 .fillMaxHeight()
@@ -86,7 +89,22 @@ fun MyApp(content: @Composable () -> Unit) {
 @Composable
 fun MainContent() {
     Column {
-        BillFormUi()
+        val splitByState = remember {
+            mutableIntStateOf(1)
+        }
+        val tipAmountState = remember {
+            mutableDoubleStateOf(0.0)
+        }
+        val totalPerPersonState = remember {
+            mutableDoubleStateOf(0.0)
+        }
+        BillFormUi(
+            splitByState = splitByState,
+            tipAmountState = tipAmountState,
+            totalPerPersonState = totalPerPersonState
+        ) {
+
+        }
     }
 }
 
@@ -137,7 +155,13 @@ fun ResultCardUi(totalPerPerson: Double = 0.0) {
 }
 
 @Composable
-fun BillFormUi(onValChange: (String) -> Unit = {}) {
+fun BillFormUi(
+    modifier: Modifier = Modifier,
+    splitByState: MutableState<Int>,
+    tipAmountState: MutableState<Double>,
+    totalPerPersonState: MutableState<Double>,
+    onValChange: (String) -> Unit = {}
+) {
     val totalBillState = remember {
         mutableStateOf("")
     }
@@ -148,25 +172,16 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
     val sliderPositionState = remember {
         mutableFloatStateOf(0f)
     }
-    val splitByState = remember {
-        mutableIntStateOf(1)
-    }
-    val tipAmountState = remember {
-        mutableDoubleStateOf(0.0)
-    }
-    val totalPerPersonState = remember {
-        mutableDoubleStateOf(0.0)
-    }
-    ResultCardUi(totalPerPersonState.doubleValue)
+    ResultCardUi(totalPerPersonState.value)
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 10.dp)
             .fillMaxWidth(),
         shape = RoundedCornerShape(corner = CornerSize(8.dp)),
         border = BorderStroke(width = 1.dp, color = Color.LightGray)
     ) {
         Column(
-            modifier = Modifier.padding(6.dp),
+            modifier = modifier.padding(6.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -183,24 +198,24 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
                 onValueChange = {
                     if (it.isNotEmpty()) {
                         totalBillState.value = it
-                        tipAmountState.doubleValue = calculateTotalTip(
+                        tipAmountState.value = calculateTotalTip(
                             totalBillState.value.toDouble(),
                             sliderPositionState.floatValue.toInt()
                         )
-                        totalPerPersonState.doubleValue = totalPerPersonCalculation(
+                        totalPerPersonState.value = totalPerPersonCalculation(
                             totalBillState.value.toDouble(),
-                            splitByState.intValue,
+                            splitByState.value,
                             sliderPositionState.floatValue.toInt()
                         )
                     } else {
                         totalBillState.value = ""
-                        totalPerPersonState.doubleValue = 0.0
+                        totalPerPersonState.value = 0.0
                     }
                 }
             )
             if (validState) {
                 Row(
-                    modifier = Modifier
+                    modifier = modifier
                         .padding(start = 10.dp, end = 10.dp, bottom = 10.dp)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -208,7 +223,7 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
                 ) {
                     Text(
                         text = "Split",
-                        modifier = Modifier.align(alignment = Alignment.CenterVertically),
+                        modifier = modifier.align(alignment = Alignment.CenterVertically),
                         style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                     )
                     Row {
@@ -216,18 +231,18 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
                             imageVector = Icons.Default.Remove,
                             size = 30.dp,
                             onClick = {
-                                splitByState.intValue =
-                                    if (splitByState.intValue > 1) splitByState.intValue - 1 else 1
-                                totalPerPersonState.doubleValue = totalPerPersonCalculation(
+                                splitByState.value =
+                                    if (splitByState.value > 1) splitByState.value - 1 else 1
+                                totalPerPersonState.value = totalPerPersonCalculation(
                                     totalBillState.value.toDouble(),
-                                    splitByState.intValue,
+                                    splitByState.value,
                                     sliderPositionState.floatValue.toInt()
                                 )
                             }
                         )
                         Text(
-                            text = "${splitByState.intValue}",
-                            modifier = Modifier
+                            text = "${splitByState.value}",
+                            modifier = modifier
                                 .align(alignment = Alignment.CenterVertically)
                                 .padding(start = 9.dp, end = 9.dp),
                             style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
@@ -236,10 +251,10 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
                             imageVector = Icons.Default.Add,
                             size = 30.dp,
                             onClick = {
-                                splitByState.intValue += 1
-                                totalPerPersonState.doubleValue = totalPerPersonCalculation(
+                                splitByState.value += 1
+                                totalPerPersonState.value = totalPerPersonCalculation(
                                     totalBillState.value.toDouble(),
-                                    splitByState.intValue,
+                                    splitByState.value,
                                     sliderPositionState.floatValue.toInt()
                                 )
                             }
@@ -247,7 +262,7 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
                     }
                 }
                 Row(
-                    modifier = Modifier
+                    modifier = modifier
                         .padding(start = 10.dp, end = 10.dp, bottom = 10.dp)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -255,7 +270,7 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
                 ) {
                     Text(
                         text = "Tip",
-                        modifier = Modifier.align(alignment = Alignment.CenterVertically),
+                        modifier = modifier.align(alignment = Alignment.CenterVertically),
                         style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                     )
                     Row {
@@ -264,7 +279,7 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold
                         )
-                        val tip = "%.2f".format(tipAmountState.doubleValue)
+                        val tip = "%.2f".format(tipAmountState.value)
                         Text(
                             text = tip,
                             fontSize = 18.sp,
@@ -273,7 +288,7 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
                     }
                 }
                 Column(
-                    modifier = Modifier
+                    modifier = modifier
                         .fillMaxWidth()
                         .padding(start = 10.dp, end = 10.dp, bottom = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -293,13 +308,13 @@ fun BillFormUi(onValChange: (String) -> Unit = {}) {
                         value = sliderPositionState.floatValue,
                         onValueChange = {
                             sliderPositionState.floatValue = it
-                            tipAmountState.doubleValue = calculateTotalTip(
+                            tipAmountState.value = calculateTotalTip(
                                 totalBillState.value.toDouble(),
                                 sliderPositionState.floatValue.toInt()
                             )
-                            totalPerPersonState.doubleValue = totalPerPersonCalculation(
+                            totalPerPersonState.value = totalPerPersonCalculation(
                                 totalBillState.value.toDouble(),
-                                splitByState.intValue,
+                                splitByState.value,
                                 sliderPositionState.floatValue.toInt()
                             )
                         },
